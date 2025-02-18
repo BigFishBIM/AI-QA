@@ -1,7 +1,7 @@
 # 01
 在MVVM模式中，某些集合（集合元素可能为但不限于自定义类、枚举等）可能需要在DataGrid或者ListView中展示，视图中可能有一列CheckBox，用于表示该行的元素是否被选中，可能还有一列是按钮，绑定用于操作元素的命令；集合元素可能还有其他字段属性，在TextBook或TextBox等展示；集合元素可能还有集合属性，可在ComboBox等展示。视图中还有“确定”/“取消”按钮，分别可以确定修改和取消修改。请你想一个案例，写出C#完整代码。
 
-<details style="color: #999; font-size: 12px">
+<details style="color: #999">
     <summary style="color: #666; font-size: 12px">思考</summary>
     
 好的，我现在需要帮用户解决一个关于在MVVM模式中使用DataGrid或ListView展示集合的问题。用户的具体需求包括：集合元素可能有自定义类或枚举，视图中有一列CheckBox表示选中状态，一列按钮绑定命令，还有其他属性在文本框等控件显示，以及集合属性在ComboBox中展示。还有确定和取消按钮来提交或撤销修改。
@@ -332,7 +332,7 @@ public static class DepartmentExtension
 
 # 02
 优化代码，使这套方案适用于多种元素类型，如Employee类可改为一个枚举，Name改为枚举的显示名称。同时可能会出现对集合的添加、删除、排序、过滤等操作。
-<details style="color: #999; font-size: 12px">
+<details style="color: #999">
     <summary style="color: #666; font-size: 12px">思考</summary>
     
 好的，用户希望我优化之前的MVVM示例代码，使其适用于多种元素类型，比如将Employee类改为枚举，并将Name属性显示为枚举的显示名称。此外，还需要支持集合的添加、删除、排序和过滤操作。我需要仔细分析用户的需求，并考虑如何调整现有代码结构。
@@ -827,7 +827,7 @@ private void GenerateColumns(Type itemType)
 # 03
 将上面建议落实到代码中，并将删除命令时对应的所选元素，改为视图UI所选行确定（可支持多选），而不是由元素IsSelected属性确定。另外ViewModel中的SelectedItem，可否改为多个？
 
-<details style="color: #999; font-size: 12px">
+<details style="color: #999">
     <summary style="color: #666; font-size: 12px">思考</summary>
 
 好的，用户希望将之前的优化代码进一步改进，特别是调整删除命令的逻辑，使其基于UI选择的行而不是元素的IsSelected属性，同时还要支持多选。另外，ViewModel中的SelectedItem需要改为多个。我需要仔细分析之前的代码，然后找出需要修改的地方。
@@ -1421,7 +1421,7 @@ public enum Department
 
 # 00
 问题
-<details style="color: #999; font-size: 12px">
+<details style="color: #999">
     <summary style="color: #666; font-size: 12px">思考</summary>
     
 

@@ -1,6 +1,6 @@
 # 00
 问题
-<details style="color: #999; font-size: 12px">
+<details style="color: #999">
     <summary style="color: #666; font-size: 12px">思考</summary>
     
 
