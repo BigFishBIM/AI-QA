@@ -829,7 +829,7 @@ private void GenerateColumns(Type itemType)
 
 <details style="color: #999; font-size: 12px">
     <summary style="color: #666; font-size: 12px">思考</summary>
-    
+
 好的，用户希望将之前的优化代码进一步改进，特别是调整删除命令的逻辑，使其基于UI选择的行而不是元素的IsSelected属性，同时还要支持多选。另外，ViewModel中的SelectedItem需要改为多个。我需要仔细分析之前的代码，然后找出需要修改的地方。
 
 首先，回顾之前的代码，删除操作是基于IIdentifiable接口中的IsSelected属性。用户现在希望改为通过UI的选择（比如DataGrid的多选）来确定要删除的项。这意味着需要将删除命令的触发从元素的IsSelected属性改为视图中的SelectedItems集合。
@@ -884,77 +884,50 @@ private void GenerateColumns(Type itemType)
 
 编写一个附加属性类，处理SelectedItems的绑定：
 
+```csharp
 public static class DataGridExtensions
-
 {
+  public static readonly DependencyProperty SelectedItemsProperty =
+  DependencyProperty.RegisterAttached("SelectedItems", typeof(INotifyCollectionChanged), typeof(DataGridExtensions),
+  new PropertyMetadata(null, OnSelectedItemsChanged));
 
-public static readonly DependencyProperty SelectedItemsProperty =
+  public static void SetSelectedItems(DependencyObject element, INotifyCollectionChanged value)
+  {
+    element.SetValue(SelectedItemsProperty, value);
+  }
 
-DependencyProperty.RegisterAttached("SelectedItems", typeof(INotifyCollectionChanged), typeof(DataGridExtensions),
+  public static INotifyCollectionChanged GetSelectedItems(DependencyObject element)
+  {
+    return (INotifyCollectionChanged)element.GetValue(SelectedItemsProperty);
+  }
 
-new PropertyMetadata(null, OnSelectedItemsChanged));
+  private static void OnSelectedItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+  {
+    var dataGrid = d as DataGrid;
+    if (dataGrid == null) return;
 
-public static void SetSelectedItems(DependencyObject element, INotifyCollectionChanged value)
+    if (e.OldValue is INotifyCollectionChanged oldCollection)
+    {
+      oldCollection.CollectionChanged -= SelectedItems_CollectionChanged;
+    }
+    if (e.NewValue is INotifyCollectionChanged newCollection)
+    {
+      newCollection.CollectionChanged += SelectedItems_CollectionChanged;
+      UpdateDataGridSelection(dataGrid, newCollection);
+    }
+  }
 
-{
+  private static void SelectedItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+  {
+    // 处理ViewModel中SelectedItems的变化，更新DataGrid的选中项
+  }
 
-element.SetValue(SelectedItemsProperty, value);
-
+  private static void UpdateDataGridSelection(DataGrid dataGrid, INotifyCollectionChanged selectedItems)
+  {
+    / 同步DataGrid的选中项到ViewModel的SelectedItems
+  }
 }
-
-public static INotifyCollectionChanged GetSelectedItems(DependencyObject element)
-
-{
-
-return (INotifyCollectionChanged)element.GetValue(SelectedItemsProperty);
-
-}
-
-private static void OnSelectedItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-
-{
-
-var dataGrid = d as DataGrid;
-
-if (dataGrid == null) return;
-
-if (e.OldValue is INotifyCollectionChanged oldCollection)
-
-{
-
-oldCollection.CollectionChanged -= SelectedItems_CollectionChanged;
-
-}
-
-if (e.NewValue is INotifyCollectionChanged newCollection)
-
-{
-
-newCollection.CollectionChanged += SelectedItems_CollectionChanged;
-
-UpdateDataGridSelection(dataGrid, newCollection);
-
-}
-
-}
-
-private static void SelectedItems_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-
-{
-
-// 处理ViewModel中SelectedItems的变化，更新DataGrid的选中项
-
-}
-
-private static void UpdateDataGridSelection(DataGrid dataGrid, INotifyCollectionChanged selectedItems)
-
-{
-
-// 同步DataGrid的选中项到ViewModel的SelectedItems
-
-}
-
-}
+```
 
 这可能比较复杂，另一种方法是使用事件处理，直接在XAML中添加EventTrigger，当SelectionChanged时，调用命令将SelectedItems传递给ViewModel。
 
@@ -962,17 +935,14 @@ private static void UpdateDataGridSelection(DataGrid dataGrid, INotifyCollection
 
 在DataGrid中添加：
 
+```xml
 <i:Interaction.Triggers>
-
-<i:EventTrigger EventName="SelectionChanged">
-
-<i:InvokeCommandAction Command="{Binding SelectionChangedCommand}"
-
-CommandParameter="{Binding SelectedItems, ElementName=dataGrid}"/>
-
-</i:EventTrigger>
-
+  <i:EventTrigger EventName="SelectionChanged">
+    <i:InvokeCommandAction Command="{Binding SelectionChangedCommand}" 
+      CommandParameter="{Binding SelectedItems, ElementName=dataGrid}"/>
+  </i:EventTrigger>
 </i:Interaction.Triggers>
+```
 
 然后在ViewModel中处理SelectionChangedCommand，将参数转换为IList，并更新SelectedItems集合。
 
@@ -1014,7 +984,9 @@ public abstract class ObservableObject : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }
+```
 
+```csharp
 // 通用ViewModel
 public class GenericViewModel : ObservableObject
 {
@@ -1097,7 +1069,9 @@ public class GenericViewModel : ObservableObject
             new SortDescription(sortBy, ListSortDirection.Ascending));
     }
 }
+```
 
+```csharp
 // 数据模型
 public class GenericItem : ObservableObject, IIdentifiable
 {
@@ -1116,7 +1090,9 @@ public class GenericItem : ObservableObject, IIdentifiable
         set { _displayName = value; OnPropertyChanged(); }
     }
 }
+```
 
+```csharp
 // 枚举支持
 public class EnumItem : ObservableObject, IIdentifiable
 {
@@ -1142,7 +1118,9 @@ public static class EnumExtensions
         return field?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? value.ToString();
     }
 }
+```
 
+```csharp
 // 命令实现
 public class RelayCommand : ICommand
 {
@@ -1165,7 +1143,9 @@ public class RelayCommand : ICommand
         remove => CommandManager.RequerySuggested -= value;
     }
 }
+```
 
+```csharp
 // 视图绑定帮助类
 public static class DataGridBehavior
 {
@@ -1220,7 +1200,6 @@ public static class DataGridBehavior
 ```
 
 XAML视图实现：
-
 ```xml
 <Window x:Class="GenericView.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
